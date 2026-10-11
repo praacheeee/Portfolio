@@ -13,13 +13,13 @@ const projectDetails = {
     index: "02",
     tags: "COMPUTER VISION · DEEP LEARNING · INFRASTRUCTURE",
     description: "An automated computer vision system utilizing convolutional neural networks to detect road surface anomalies and streamline municipal workflows.",
-    githubUrl: "https://github.com/praacheeee/Portfolio"
+    githubUrl: "https://github.com/praacheeee/Sentinel-AI"
   },
   "MENTORMIND": {
     index: "03",
     tags: "AI · PRODUCTIVITY · WEB",
     description: "An AI-powered productivity coach designed to support planning, reflection, and focused work.",
-    githubUrl: "https://github.com/praacheeee/Portfolio"
+    githubUrl: "https://github.com/praacheeee/mentor-ai-chatbot"
   }
 };
 
