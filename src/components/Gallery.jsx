@@ -1,9 +1,7 @@
-
 import { useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   KeyboardControls,
-  PointerLockControls,
   Text,
   useKeyboardControls,
 } from "@react-three/drei";
@@ -69,8 +67,41 @@ function Artwork({ title, color, x, onSelect }) {
   );
 }
 
-function KineticSculpture({ onDraggingChange }) {
+function WireframeBox({ width, height, color }) {
+  const barThickness = 0.032;
+  const material = (
+    <meshStandardMaterial
+      color={color}
+      roughness={0.2}
+      metalness={0.95}
+    />
+  );
+
+  return (
+    <group>
+      <mesh position={[0, height / 2, 0]} castShadow>
+        <boxGeometry args={[width + barThickness, barThickness, barThickness]} />
+        {material}
+      </mesh>
+      <mesh position={[0, -height / 2, 0]} castShadow>
+        <boxGeometry args={[width + barThickness, barThickness, barThickness]} />
+        {material}
+      </mesh>
+      <mesh position={[-width / 2, 0, 0]} castShadow>
+        <boxGeometry args={[barThickness, height - barThickness, barThickness]} />
+        {material}
+      </mesh>
+      <mesh position={[width / 2, 0, 0]} castShadow>
+        <boxGeometry args={[barThickness, height - barThickness, barThickness]} />
+        {material}
+      </mesh>
+    </group>
+  );
+}
+
+function Sculpture3D({ className }) {
   const sculpture = useRef();
+  const innerCoreRef = useRef();
 
   const drag = useRef({
     active: false,
@@ -80,36 +111,42 @@ function KineticSculpture({ onDraggingChange }) {
     vy: 0,
   });
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const d = drag.current;
     const object = sculpture.current;
 
-    if (!object || d.active) return;
+    if (!object) return;
 
-    // Continuous, subtle rotation with momentum after dragging.
-    object.rotation.y += (0.16 + d.vx) * delta;
-    object.rotation.x += d.vy * delta;
+    if (!d.active) {
+      // Continuous subtle rotation with momentum after dragging
+      object.rotation.y += (0.15 + d.vx) * delta;
+      object.rotation.x += d.vy * delta;
 
-    const friction = Math.exp(-1.6 * delta);
-    d.vx *= friction;
-    d.vy *= friction;
+      const friction = Math.exp(-1.6 * delta);
+      d.vx *= friction;
+      d.vy *= friction;
 
-    // Prevent residual momentum from continuing indefinitely.
-    if (Math.abs(d.vx) < 0.001) d.vx = 0;
-    if (Math.abs(d.vy) < 0.001) d.vy = 0;
+      if (Math.abs(d.vx) < 0.001) d.vx = 0;
+      if (Math.abs(d.vy) < 0.001) d.vy = 0;
+    }
+
+    if (innerCoreRef.current) {
+      innerCoreRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5) * 0.025;
+      innerCoreRef.current.rotation.z += delta * 0.15;
+    }
   });
 
   function startDrag(event) {
     event.stopPropagation();
-
     const d = drag.current;
     d.active = true;
-    d.x = event.nativeEvent.clientX;
-    d.y = event.nativeEvent.clientY;
+    d.x = event.clientX;
+    d.y = event.clientY;
     d.vx = 0;
     d.vy = 0;
 
-    onDraggingChange(true);
+    // Capture pointer so rotation continues even if cursor moves outside canvas
+    event.target.setPointerCapture?.(event.pointerId);
     document.body.style.cursor = "grabbing";
   }
 
@@ -118,180 +155,95 @@ function KineticSculpture({ onDraggingChange }) {
     const object = sculpture.current;
 
     if (!d.active || !object) return;
-
     event.stopPropagation();
 
-    const x = event.nativeEvent.clientX;
-    const y = event.nativeEvent.clientY;
-    const dx = x - d.x;
-    const dy = y - d.y;
+    const dx = event.clientX - d.x;
+    const dy = event.clientY - d.y;
 
-    // Drag horizontally or vertically in either direction.
     object.rotation.y += dx * 0.012;
     object.rotation.x += dy * 0.009;
 
-    // Faster movement produces stronger release momentum.
     d.vx = THREE.MathUtils.clamp(dx * 0.065, -3, 3);
     d.vy = THREE.MathUtils.clamp(dy * 0.045, -2, 2);
 
-    d.x = x;
-    d.y = y;
+    d.x = event.clientX;
+    d.y = event.clientY;
   }
 
-  function endDrag() {
+  function endDrag(event) {
     if (!drag.current.active) return;
-
     drag.current.active = false;
-    onDraggingChange(false);
+    event.target.releasePointerCapture?.(event.pointerId);
     document.body.style.cursor = "auto";
   }
 
   return (
-    <group position={[0, 1.6, -1.5]}>
-      <group
-        ref={sculpture}
-        onPointerDown={startDrag}
-        onPointerMove={moveDrag}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-      >
-        {/* Tall architectural metal elements */}
-        <mesh position={[0, 0.05, 0]}>
-          <boxGeometry args={[0.08, 3.2, 0.08]} />
+    <group
+      position={[0, 1.6, -1.5]}
+      className={className}
+      onPointerDown={startDrag}
+      onPointerMove={moveDrag}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onPointerLeave={endDrag}
+    >
+      <group ref={sculpture}>
+        <mesh position={[0, 0.12, 0]} castShadow receiveShadow>
+          <icosahedronGeometry args={[0.82, 0]} />
           <meshStandardMaterial
-            color="#c39a63"
-            metalness={0.9}
+            color="#1b1b1b"
             roughness={0.25}
+            metalness={0.8}
+            flatShading={true}
           />
         </mesh>
 
-        <mesh position={[0.4, 0.05, -0.12]}>
-          <boxGeometry args={[0.07, 3.5, 0.07]} />
-          <meshStandardMaterial
-            color="#ead0a2"
-            metalness={0.85}
-            roughness={0.22}
-          />
-        </mesh>
-
-        {/* Intersecting geometric frames */}
-        <mesh
-          position={[-0.12, 0.2, 0.1]}
-          rotation={[0, 0, -0.32]}
-        >
-          <boxGeometry args={[1.65, 0.055, 0.055]} />
-          <meshStandardMaterial
-            color="#bd8b4d"
-            metalness={0.9}
-            roughness={0.25}
-          />
-        </mesh>
-
-        <mesh
-          position={[0.08, -0.45, 0.2]}
-          rotation={[0, 0, 0.42]}
-        >
-          <boxGeometry args={[1.7, 0.055, 0.055]} />
-          <meshStandardMaterial
-            color="#e1bc83"
-            metalness={0.9}
-            roughness={0.22}
-          />
-        </mesh>
-
-        {/* Sculptural bronze blades */}
-        <mesh
-          position={[-0.35, 0.75, 0.12]}
-          rotation={[0.08, 0, -0.48]}
-        >
-          <boxGeometry args={[0.48, 1.65, 0.12]} />
-          <meshStandardMaterial
-            color="#b17a43"
-            metalness={0.88}
-            roughness={0.28}
-          />
-        </mesh>
-
-        <mesh
-          position={[0.38, -0.65, 0.22]}
-          rotation={[0, 0, 0.55]}
-        >
-          <boxGeometry args={[0.38, 1.45, 0.1]} />
-          <meshStandardMaterial
-            color="#d8b27a"
-            metalness={0.92}
-            roughness={0.24}
-          />
-        </mesh>
-
-        {/* Dark faceted central core */}
-        <mesh position={[0, 0, 0.35]}>
-          <octahedronGeometry args={[0.62, 1]} />
-          <meshStandardMaterial
-            color="#211b17"
-            metalness={0.92}
-            roughness={0.19}
-            emissive="#3e2514"
-            emissiveIntensity={0.45}
-          />
-        </mesh>
-
-        {/* Illuminated vertical accent */}
-        <mesh position={[0.04, 0, 0.46]}>
-          <boxGeometry args={[0.025, 1.85, 0.025]} />
-          <meshStandardMaterial
-            color="#ffdda5"
-            emissive="#d99543"
-            emissiveIntensity={1.6}
-            metalness={0.6}
-            roughness={0.25}
-          />
-        </mesh>
-
-        {/* Small precision details */}
-        {[-0.85, 0.85].map((y, i) => (
-          <mesh
-            key={i}
-            position={[i === 0 ? -0.48 : 0.48, y, 0.28]}
-            rotation={[0, 0, 0.4]}
-          >
-            <boxGeometry args={[0.12, 0.12, 0.12]} />
+        <group ref={innerCoreRef} position={[0, -0.22, 0]}>
+          <mesh castShadow>
+            <octahedronGeometry args={[0.6, 0]} />
             <meshStandardMaterial
-              color="#f0d3a5"
-              metalness={0.95}
-              roughness={0.16}
+              color="#e2bf63"
+              roughness={0.2}
+              metalness={0.92}
+              flatShading={true}
+              emissive="#3d3000"
+              emissiveIntensity={0.3}
             />
           </mesh>
-        ))}
+        </group>
+
+        <mesh position={[0.42, 0.35, -0.15]} rotation={[0.25, 0.45, 0.2]} castShadow>
+          <boxGeometry args={[0.04, 1.7, 0.04]} />
+          <meshStandardMaterial color="#e2bf63" roughness={0.25} metalness={0.9} />
+        </mesh>
+        <mesh position={[-0.38, -0.45, 0.18]} rotation={[-0.2, -0.4, -0.25]} castShadow>
+          <boxGeometry args={[0.035, 1.3, 0.035]} />
+          <meshStandardMaterial color="#d4af37" roughness={0.3} metalness={0.85} />
+        </mesh>
+
+        <group position={[-0.05, 0.05, 0.05]} rotation={[0.3, 0.4, -0.6]}>
+          <WireframeBox width={1.55} height={1.55} color="#e8ca6b" />
+        </group>
+        <group position={[0.05, -0.05, -0.05]} rotation={[-0.4, 0.3, 0.35]}>
+          <WireframeBox width={1.4} height={1.4} color="#d4af37" />
+        </group>
       </group>
 
-      {/* Black stone rectangular pedestal */}
-      <mesh position={[0, -1.35, 0]}>
-        <boxGeometry args={[2.2, 0.42, 1.65]} />
-        <meshStandardMaterial
-          color="#171615"
-          metalness={0.35}
-          roughness={0.28}
-        />
+      <mesh position={[0, -1.2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[1.3, 0.3, 1.0]} />
+        <meshStandardMaterial color="#d4af37" roughness={0.3} metalness={0.8} />
       </mesh>
 
-      {/* Fine brass detail */}
-      <mesh position={[0, -1.13, 0]}>
-        <boxGeometry args={[2.05, 0.025, 1.5]} />
-        <meshStandardMaterial
-          color="#bd9257"
-          metalness={0.95}
-          roughness={0.2}
-          emissive="#65421f"
-          emissiveIntensity={0.25}
-        />
+      <mesh position={[0, -1.5, 0]} receiveShadow>
+        <boxGeometry args={[1.4, 0.3, 1.1]} />
+        <meshStandardMaterial color="#121212" roughness={0.85} metalness={0.2} />
       </mesh>
 
       <pointLight
-        position={[0, 0.6, 1.3]}
-        intensity={12}
+        position={[0, 0.8, 1.2]}
+        intensity={14}
         distance={5}
-        color="#e5b777"
+        color="#ffd9a4"
       />
     </group>
   );
@@ -306,15 +258,11 @@ function Movement() {
   useFrame(({ camera }, delta) => {
     const keys = getKeys();
 
-    forward.current
-      .set(0, 0, -1)
-      .applyQuaternion(camera.quaternion);
+    forward.current.set(0, 0, -1).applyQuaternion(camera.quaternion);
     forward.current.y = 0;
     forward.current.normalize();
 
-    right.current
-      .set(1, 0, 0)
-      .applyQuaternion(camera.quaternion);
+    right.current.set(1, 0, 0).applyQuaternion(camera.quaternion);
     right.current.y = 0;
     right.current.normalize();
 
@@ -330,18 +278,8 @@ function Movement() {
       camera.position.addScaledVector(direction.current, 4 * delta);
     }
 
-    camera.position.x = THREE.MathUtils.clamp(
-      camera.position.x,
-      -7.8,
-      7.8
-    );
-
-    camera.position.z = THREE.MathUtils.clamp(
-      camera.position.z,
-      -8.1,
-      7.8
-    );
-
+    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -7.8, 7.8);
+    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -8.1, 7.8);
     camera.position.y = 1.65;
   });
 
@@ -349,9 +287,6 @@ function Movement() {
 }
 
 function GalleryScene({ onSelect }) {
-  const [isSculptureDragging, setIsSculptureDragging] =
-    useState(false);
-
   return (
     <>
       <color attach="background" args={["#090909"]} />
@@ -361,17 +296,9 @@ function GalleryScene({ onSelect }) {
       <hemisphereLight args={["#d8d9e3", "#21160f", 0.7]} />
 
       {/* Gallery floor */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
-        receiveShadow
-      >
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[18, 18]} />
-        <meshStandardMaterial
-          color="#292725"
-          roughness={0.3}
-          metalness={0.22}
-        />
+        <meshStandardMaterial color="#292725" roughness={0.3} metalness={0.22} />
       </mesh>
 
       {/* Back wall */}
@@ -407,19 +334,12 @@ function GalleryScene({ onSelect }) {
 
       {/* Project exhibits */}
       {exhibits.map((item) => (
-        <Artwork
-          key={item.title}
-          {...item}
-          onSelect={onSelect}
-        />
+        <Artwork key={item.title} {...item} onSelect={onSelect} />
       ))}
 
-      {/* Central kinetic installation */}
-      <KineticSculpture
-        onDraggingChange={setIsSculptureDragging}
-      />
+      {/* Central Interactive Sculpture */}
+      <Sculpture3D className="sculpture-canvas" />
 
-      <PointerLockControls enabled={!isSculptureDragging} />
       <Movement />
     </>
   );

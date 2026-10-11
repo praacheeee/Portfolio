@@ -1,151 +1,94 @@
-
-import { useState } from "react";
-import Gallery from "./components/Gallery.jsx";
-import "./index.css";
-
-const projects = {
-  FLOODSENSE: {
-    category: "AI / NATURAL LANGUAGE PROCESSING",
-    description:
-      "An AI system concept that classifies flood emergency messages to help identify urgent requests for assistance.",
-    stack: "Python · NLP · Machine Learning",
-  },
-  "POTHOLE DETECTION": {
-    category: "COMPUTER VISION",
-    description:
-      "A road-damage detection system using computer vision to identify potholes and support infrastructure maintenance.",
-    stack: "Python · YOLOv8 · OpenCV · FastAPI · React",
-  },
-  MENTORMIND: {
-    category: "AI APPLICATIONS",
-    description:
-      "An AI productivity coach designed to help users organize their goals and work through tasks.",
-    stack: "Python · Flask · React · OpenRouter",
-  },
-};
+import React, { useState } from "react";
+import Gallery from "./components/Gallery";
 
 export default function App() {
-  const [entered, setEntered] = useState(false);
-  const [selected, setSelected] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(null);
 
-  const project = projects[selected];
+  const handleEnterGallery = () => {
+    window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+  };
 
   return (
-    <main className="portfolio">
-      <header className="topbar">
-        <button
-          className="logo"
-          onClick={() => {
-            setEntered(false);
-            setSelected(null);
-          }}
-        >
-          P<span>.</span>
-        </button>
-
-        <div className="nav-links">
-          <button onClick={() => setEntered(true)}>
-            THE GALLERY
-          </button>
-          <button onClick={() => setSelected("FLOODSENSE")}>
-            PROJECTS
-          </button>
-          <a href="mailto:your-email@example.com">
-            CONTACT ↗
-          </a>
+    <div className="relative w-full h-screen bg-[#090909] text-[#f1ece4] overflow-hidden selection:bg-[#d6b58b] selection:text-black font-mono">
+      {/* Navbar: 3-column grid layout restoring the exact header */}
+      <header className="absolute top-0 left-0 w-full h-[84px] grid grid-cols-3 items-center px-[5%] md:px-[6%] z-30 pointer-events-auto">
+        <div className="text-2xl font-serif-headline font-bold tracking-wider text-[#f1ece4] justify-self-start">
+          P.
         </div>
-
-        <span className="edition">DIGITAL ARCHIVE · 2026</span>
+        <nav className="hidden md:flex items-center justify-center space-x-12 text-[11px] uppercase tracking-[0.25em] text-[#b8b0a6] font-medium justify-self-center">
+          <a href="#gallery" onClick={(e) => { e.preventDefault(); handleEnterGallery(); }} className="hover:text-[#f1ece4] transition-colors">THE GALLERY</a>
+          <a href="#projects" onClick={(e) => { e.preventDefault(); handleEnterGallery(); }} className="hover:text-[#f1ece4] transition-colors">PROJECTS</a>
+          <a href="#contact" onClick={(e) => { e.preventDefault(); handleEnterGallery(); }} className="hover:text-[#f1ece4] transition-colors flex items-center gap-1">CONTACT <span>↗</span></a>
+        </nav>
+        <div className="text-[11px] uppercase tracking-[0.2em] text-[#b8b0a6] font-light justify-self-end text-right">
+          DIGITAL ARCHIVE &nbsp;&middot;&nbsp; 2026
+        </div>
       </header>
 
-      <section className="gallery-world">
-        <Gallery onSelect={setSelected} />
+      {/* Single 3D Gallery Canvas Background */}
+      <div className="absolute inset-0 w-full h-full z-0 pointer-events-auto">
+        <Gallery onSelect={(title) => setSelectedProject(title)} />
+      </div>
 
-        {!entered && !selected && (
-          <div className="intro">
-            <p className="eyebrow">
-              A COMPUTER SCIENCE PORTFOLIO
-            </p>
+      {/* Hero Overlay Content matching original proportions */}
+      <div className="absolute inset-0 z-20 flex flex-col justify-between pt-[104px] pb-12 px-[7%] md:px-[7%] pointer-events-none">
+        {/* Hero Content Box */}
+        <div className="max-w-[440px] z-20 pointer-events-auto my-auto relative">
+          <p className="text-[10px] uppercase tracking-[0.38em] text-[#d6b58b] mb-4 font-mono font-medium">
+            A COMPUTER SCIENCE PORTFOLIO
+          </p>
+          <h1 className="text-[clamp(52px,6vw,76px)] font-serif-headline font-normal tracking-[-0.03em] mb-5 leading-[1.02] text-[#f1ece4]">
+            Ideas made <br />
+            <span className="font-normal italic text-[#d6b58b]">tangible.</span>
+          </h1>
+          <p className="text-[12.5px] text-[#b8b0a6] font-light mb-8 leading-[2] font-mono max-w-[400px]">
+            Exploring artificial intelligence, software engineering, and the space where technology meets creativity.
+          </p>
+          <button
+            onClick={handleEnterGallery}
+            className="group w-[224px] h-[56px] bg-[#d6b58b] text-[#111111] text-[11px] uppercase tracking-[0.2em] font-medium rounded-none flex items-center justify-center space-x-3 shadow-xl cursor-pointer pointer-events-auto hover:bg-[#e2c49e] transition-all"
+          >
+            <span>ENTER THE GALLERY</span>
+            <span className="transform group-hover:translate-x-1 transition-transform">↗</span>
+          </button>
+        </div>
 
-            <h1>
-              Ideas made
-              <br />
-              <em>tangible.</em>
-            </h1>
-
-            <p className="intro-copy">
-              Exploring artificial intelligence,
-              software engineering, and the space
-              where technology meets creativity.
-            </p>
-
-            <button
-              className="enter-button"
-              onClick={() => setEntered(true)}
-            >
-              ENTER THE GALLERY <span>↗</span>
-            </button>
-
-            <p className="scroll-note">
-              AN INTERACTIVE DIGITAL EXHIBITION
-            </p>
+        {/* Footer Editorial Labels */}
+        <div className="flex justify-between items-end w-full z-20 pointer-events-auto text-[10px] uppercase tracking-[0.22em] text-[#b8b0a6] pb-2">
+          <div>
+            <p className="mb-0.5">AN INTERACTIVE DIGITAL EXHIBITION</p>
+            <p className="text-[#888076]">INDEPENDENT DIGITAL ARCHIVE</p>
           </div>
-        )}
-
-        {entered && !selected && (
-          <div className="controls-hint">
-            <span>W A S D</span> MOVE
-            <span>MOUSE</span> LOOK AROUND
-            <p>Click the scene to explore · ESC to unlock</p>
+          <div className="text-right cursor-pointer flex items-center gap-2 hover:text-[#f1ece4] transition-colors" onClick={handleEnterGallery}>
+            <span className="text-[#d6b58b]">01 / EXPLORE</span>
+            <span className="animate-bounce">↓</span>
           </div>
-        )}
+        </div>
+      </div>
 
-        {selected && (
-          <aside className="project-card">
+      {/* Project Detail Modal */}
+      {selectedProject && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-6 pointer-events-auto">
+          <div className="bg-[#121110] border border-[#d6b58b]/30 max-w-2xl w-full p-8 rounded relative shadow-2xl">
             <button
-              className="close"
-              onClick={() => setSelected(null)}
-              aria-label="Close project"
+              onClick={() => setSelectedProject(null)}
+              className="absolute top-4 right-4 text-[#b8b0a6] hover:text-white font-mono text-lg"
             >
-              ×
+              [✕]
             </button>
-
-            {project ? (
-              <>
-                <p className="eyebrow">{project.category}</p>
-                <h2>{selected}</h2>
-                <p className="project-description">
-                  {project.description}
-                </p>
-                <p className="stack">{project.stack}</p>
-                <a
-                  className="text-link"
-                  href={`https://github.com/search?q=${encodeURIComponent(selected)}&type=repositories`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  EXPLORE ON GITHUB ↗
-                </a>
-              </>
-            ) : (
-              <>
-                <p className="eyebrow">THE EXHIBITION</p>
-                <h2>Work in progress.</h2>
-                <p>
-                  This exhibit is being prepared.
-                  Return to the gallery to explore.
-                </p>
-              </>
-            )}
-          </aside>
-        )}
-
-        <footer className="gallery-footer">
-          <span>INDEPENDENT DIGITAL ARCHIVE</span>
-          <span>01 / EXPLORE</span>
-        </footer>
-      </section>
-    </main>
+            <h2 className="text-3xl font-serif-headline text-[#f1ece4] mb-4">{selectedProject}</h2>
+            <p className="text-[#b8b0a6] font-mono text-sm mb-8 leading-relaxed">
+              Detailed architecture and interactive overview for {selectedProject}. Engineered with high-performance React and Three.js components within a cinematic exhibition space.
+            </p>
+            <button
+              onClick={() => setSelectedProject(null)}
+              className="px-6 py-3 bg-[#d6b58b] text-[#111111] text-xs font-mono uppercase tracking-widest rounded-none hover:bg-[#e2c49e] transition-colors"
+            >
+              CLOSE EXHIBIT
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
-
