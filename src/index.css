@@ -1,0 +1,277 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap');
+
+:root {
+  font-family: 'DM Mono', monospace;
+  color: #f1ece4;
+  background: #090909;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button, a {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible, a:focus-visible {
+  outline: 2px solid #d6b58b;
+  outline-offset: 4px;
+}
+
+.portfolio {
+  min-height: 100vh;
+  background: #090909;
+}
+
+.topbar {
+  position: relative;
+  z-index: 5;
+  height: 72px;
+  padding: 0 5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #302b25;
+  background: #090909;
+}
+
+.logo {
+  background: none;
+  border: 0;
+  color: #f1ece4;
+  font: 36px 'Playfair Display', serif;
+}
+
+.logo span {
+  color: #d6b58b;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.nav-links button,
+.nav-links a {
+  background: none;
+  border: 0;
+  color: #c0b8ad;
+  text-decoration: none;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.nav-links button:hover,
+.nav-links a:hover {
+  color: #e8c69a;
+}
+
+.edition, .eyebrow, .scroll-note, .gallery-footer {
+  color: #c3a47c;
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.gallery-world {
+  position: relative;
+  height: calc(100vh - 72px);
+  min-height: 580px;
+  overflow: hidden;
+  background: #090909;
+}
+
+.gallery-world canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.intro {
+  position: absolute;
+  z-index: 2;
+  top: 17%;
+  left: 7%;
+  width: min(480px, 82%);
+  pointer-events: none;
+}
+
+.intro h1 {
+  margin: 25px 0;
+  font: 400 clamp(48px, 6vw, 76px) / 1.05
+    'Playfair Display', serif;
+  letter-spacing: -2px;
+}
+
+.intro h1 em {
+  color: #d6b58b;
+  font-weight: 400;
+}
+
+.intro-copy {
+  max-width: 360px;
+  color: #b8b0a6;
+  font-size: 12px;
+  line-height: 2;
+}
+
+.enter-button {
+  pointer-events: auto;
+  margin-top: 25px;
+  padding: 16px 20px;
+  border: 1px solid #d6b58b;
+  background: #d6b58b;
+  color: #17120e;
+  font-size: 10px;
+  letter-spacing: 1px;
+  transition: background 180ms ease;
+}
+
+.enter-button:hover {
+  background: #f1d8b6;
+}
+
+.enter-button span {
+  margin-left: 18px;
+}
+
+.scroll-note {
+  margin-top: 32px;
+  color: #82766a;
+}
+
+.controls-hint {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 60px;
+  transform: translateX(-50%);
+  padding: 16px 22px;
+  width: max-content;
+  max-width: 94%;
+  text-align: center;
+  background: #11110fee;
+  border: 1px solid #514330;
+  color: #bfb5a7;
+  font-size: 9px;
+  line-height: 2;
+}
+
+.controls-hint span {
+  margin: 0 9px;
+  color: #e4c397;
+}
+
+.controls-hint p {
+  margin: 5px 0 0;
+}
+
+.project-card {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  right: 5%;
+  transform: translateY(-50%);
+  width: min(390px, 88%);
+  padding: 32px;
+  background: #11110ff5;
+  border: 1px solid #655039;
+  box-shadow: 0 20px 80px #0009;
+}
+
+.project-card h2 {
+  font: 400 34px / 1.2 'Playfair Display', serif;
+  overflow-wrap: anywhere;
+}
+
+.project-card p {
+  color: #bcb4a9;
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+.project-card .stack {
+  color: #e0bd91;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  border: 0;
+  background: none;
+  color: #f1ece4;
+  font-size: 27px;
+}
+
+.text-link {
+  display: inline-block;
+  margin-top: 18px;
+  color: #e2c39a;
+  font-size: 10px;
+  text-decoration: none;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.gallery-footer {
+  position: absolute;
+  z-index: 1;
+  left: 5%;
+  right: 5%;
+  bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    height: 62px;
+  }
+
+  .nav-links {
+    gap: 12px;
+  }
+
+  .nav-links button, .nav-links a {
+    font-size: 8px;
+  }
+
+  .edition {
+    display: none;
+  }
+
+  .gallery-world {
+    height: calc(100vh - 62px);
+    min-height: 560px;
+  }
+
+  .intro {
+    top: 14%;
+  }
+
+  .intro h1 {
+    font-size: clamp(44px, 12vw, 64px);
+  }
+
+  .controls-hint {
+    bottom: 48px;
+  }
+}
