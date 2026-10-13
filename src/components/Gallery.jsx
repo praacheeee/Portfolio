@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   ContactShadows,
@@ -10,15 +10,238 @@ import {
 import * as THREE from "three";
 
 const exhibits = [
-  // FloodSense stays in place; Pothole moves into the open space to its right.
   { title: "FLOODSENSE", color: "#24556A", position: [-4.3, 2.35, -8.72], rotation: [0, 0, 0], motif: "water" },
   { title: "POTHOLE DETECTION", color: "#72533B", position: [4.2, 2.35, -8.72], rotation: [0, 0, 0], motif: "road" },
   { title: "MENTORMIND", color: "#574269", position: [8.72, 2.35, -3.0], rotation: [0, -Math.PI / 2, 0], motif: "mind" },
 ];
 
+function createArtworkTexture(motif) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 850;
+
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Deep, gallery-style background
+  const backgrounds = {
+    water: ["#061f29", "#126074", "#071923"],
+    road: ["#17130f", "#8a6240", "#302016"],
+    mind: ["#171126", "#554078", "#21162f"],
+  };
+
+  const colors = backgrounds[motif] || backgrounds.water;
+  const bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, colors[0]);
+  bg.addColorStop(0.52, colors[1]);
+  bg.addColorStop(1, colors[2]);
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Subtle atmospheric glow
+  const glow = ctx.createRadialGradient(
+    w * 0.55, h * 0.42, 5,
+    w * 0.55, h * 0.42, 520
+  );
+  glow.addColorStop(0, "rgba(236,190,112,0.22)");
+  glow.addColorStop(1, "rgba(0,0,0,0)");
+
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, h);
+
+  // Fine, understated gold artwork details
+  const gold = "#d9b578";
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = gold;
+
+  if (motif === "water") {
+    // Large orbital circles
+    [155, 235, 315].forEach((r, i) => {
+      ctx.beginPath();
+      ctx.ellipse(620, 330, r, r * 0.9, -0.3, 0, Math.PI * 2);
+      ctx.globalAlpha = 0.55 - i * 0.12;
+      ctx.stroke();
+    });
+
+    ctx.globalAlpha = 1;
+
+    // Layered flowing waves
+    for (let layer = 0; layer < 7; layer++) {
+      const y = 470 + layer * 43;
+
+      ctx.beginPath();
+      ctx.moveTo(-40, y + 60);
+
+      ctx.bezierCurveTo(
+        180, y - 100,
+        260, y + 130,
+        430, y + 5
+      );
+
+      ctx.bezierCurveTo(
+        600, y - 115,
+        770, y + 100,
+        1060, y - 65
+      );
+
+      ctx.lineWidth = layer % 2 === 0 ? 5 : 2;
+      ctx.strokeStyle = layer % 2 === 0 ? "#9bcbd0" : gold;
+      ctx.globalAlpha = 0.78 - layer * 0.07;
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+
+    // Golden focal point
+    const orb = ctx.createRadialGradient(620, 330, 2, 620, 330, 55);
+    orb.addColorStop(0, "#fff0bd");
+    orb.addColorStop(0.35, "#e7bd72");
+    orb.addColorStop(1, "#9b632e");
+
+    ctx.fillStyle = orb;
+    ctx.beginPath();
+    ctx.arc(620, 330, 40, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (motif === "road") {
+    // Layered topographic terrain
+    for (let i = 0; i < 12; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-80, 100 + i * 36);
+
+      ctx.bezierCurveTo(
+        180, -20 + i * 30,
+        290, 260 + i * 25,
+        500, 170 + i * 32
+      );
+
+      ctx.bezierCurveTo(
+        720, 80 + i * 30,
+        850, 330 + i * 26,
+        1100, 180 + i * 35
+      );
+
+      ctx.strokeStyle = i % 3 === 0 ? "#e0bc87" : "#b78b60";
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.55;
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+
+    // Winding road
+    ctx.beginPath();
+    ctx.moveTo(480, 900);
+    ctx.bezierCurveTo(360, 710, 670, 600, 535, 450);
+    ctx.bezierCurveTo(420, 320, 520, 210, 700, 100);
+
+    ctx.lineWidth = 190;
+    ctx.strokeStyle = "#171411";
+    ctx.stroke();
+
+    // Road edges
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#d7b681";
+    ctx.stroke();
+
+    // Broken center line
+    ctx.setLineDash([24, 25]);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#f1d8a8";
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Distant golden sun
+    ctx.fillStyle = "#e2b975";
+    ctx.beginPath();
+    ctx.arc(760, 185, 37, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (motif === "mind") {
+    // Interlocking celestial geometry
+    ctx.lineWidth = 2;
+
+    [100, 180, 260, 340].forEach((r, i) => {
+      ctx.beginPath();
+      ctx.ellipse(
+        550, 340, r, r * 0.92,
+        i * 0.35, 0, Math.PI * 2
+      );
+      ctx.globalAlpha = 0.5 - i * 0.08;
+      ctx.strokeStyle = gold;
+      ctx.stroke();
+    });
+
+    ctx.globalAlpha = 1;
+
+    // Flowing violet forms
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-60, 400 + i * 48);
+
+      ctx.bezierCurveTo(
+        220, 150 + i * 25,
+        310, 720 - i * 20,
+        550, 420 + i * 34
+      );
+
+      ctx.bezierCurveTo(
+        730, 200 + i * 25,
+        850, 550 - i * 18,
+        1080, 250 + i * 45
+      );
+
+      ctx.strokeStyle = i % 2 === 0 ? "#d6b9e9" : "#8f72ba";
+      ctx.lineWidth = i % 2 === 0 ? 7 : 3;
+      ctx.globalAlpha = 0.8 - i * 0.09;
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+
+    // Luminous central orb
+    const orb = ctx.createRadialGradient(690, 290, 2, 690, 290, 70);
+    orb.addColorStop(0, "#fff2d2");
+    orb.addColorStop(0.3, "#e8c990");
+    orb.addColorStop(1, "rgba(220,175,115,0)");
+
+    ctx.fillStyle = orb;
+    ctx.beginPath();
+    ctx.arc(690, 290, 70, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#f6dfb0";
+    ctx.beginPath();
+    ctx.arc(690, 290, 24, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Fine print-like border inside the artwork
+  ctx.globalAlpha = 0.65;
+  ctx.strokeStyle = "#d7b77e";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(25, 25, w - 50, h - 50);
+  ctx.globalAlpha = 1;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+
+  return texture;
+}
+
 function Artwork({ title, color, position, rotation, motif, onSelect }) {
   const artworkGroup = useRef();
   const panelMaterial = useRef();
+
+  const artworkTexture = useMemo(
+    () => createArtworkTexture(motif),
+    [motif]
+  );
   const [hovered, setHovered] = useState(false);
 
   const { pointer, camera } = useThree();
@@ -33,7 +256,6 @@ function Artwork({ title, color, position, rotation, motif, onSelect }) {
       panelMaterial.current.emissiveIntensity = hovered ? 0.24 : pulse;
     }
 
-    // Check the artwork's projected screen-space bounds.
     const group = artworkGroup.current;
     if (!group) return;
 
@@ -74,7 +296,6 @@ function Artwork({ title, color, position, rotation, motif, onSelect }) {
       return;
     }
 
-    // Project the outer frame corners to screen coordinates for accurate anchoring.
     const corners = [
       [-1.575, 1.325, 0], [1.575, 1.325, 0],
       [-1.575, -1.325, 0], [1.575, -1.325, 0],
@@ -107,15 +328,16 @@ function Artwork({ title, color, position, rotation, motif, onSelect }) {
         />
       </mesh>
 
-      {/* Clickable artwork */}
+      {/* Clickable artwork panel */}
       <mesh onClick={handleArtworkClick}>
         <planeGeometry args={[2.92, 2.42]} />
         <meshStandardMaterial
           ref={panelMaterial}
-          color={color}
-          emissive={color}
-          emissiveIntensity={0.1}
-          roughness={0.8}
+          map={artworkTexture}
+          emissive="#000000"
+          emissiveIntensity={0}
+          roughness={0.85}
+          metalness={0.05}
         />
       </mesh>
 
@@ -135,50 +357,6 @@ function Artwork({ title, color, position, rotation, motif, onSelect }) {
           side={THREE.DoubleSide}
         />
       </mesh>
-
-      {/* Subtle graphic language gives each exhibit its own identity without adding UI cards. */}
-      {motif === "water" && (
-        <group position={[0, 0, 0.025]}>
-          {[0, 1, 2].map((i) => (
-            <mesh key={i} position={[0, (i - 1) * 0.34, 0]}>
-              <torusGeometry args={[0.72 + i * 0.16, 0.012, 6, 64]} />
-              <meshBasicMaterial color="#8dc7d5" transparent opacity={0.52 - i * 0.1} />
-            </mesh>
-          ))}
-        </group>
-      )}
-      {motif === "road" && (
-        <group position={[0, 0, 0.025]} rotation={[0, 0, -0.24]}>
-          <mesh position={[-0.42, 0, 0]}>
-            <boxGeometry args={[0.035, 2.0, 0.012]} />
-            <meshBasicMaterial color="#d9b58a" transparent opacity={0.65} />
-          </mesh>
-          <mesh position={[0.42, 0, 0]}>
-            <boxGeometry args={[0.035, 2.0, 0.012]} />
-            <meshBasicMaterial color="#d9b58a" transparent opacity={0.65} />
-          </mesh>
-          {[-0.58, -0.18, 0.22, 0.62].map((y) => (
-            <mesh key={y} position={[0, y, 0]}>
-              <boxGeometry args={[0.045, 0.22, 0.014]} />
-              <meshBasicMaterial color="#f0d4a9" transparent opacity={0.72} />
-            </mesh>
-          ))}
-        </group>
-      )}
-      {motif === "mind" && (
-        <group position={[0, 0, 0.025]}>
-          {[0, 1, 2, 3].map((i) => (
-            <mesh key={i} rotation={[0, 0, i * Math.PI / 4]}>
-              <torusGeometry args={[0.48, 0.012, 6, 64]} />
-              <meshBasicMaterial color="#c6a7e8" transparent opacity={0.55} />
-            </mesh>
-          ))}
-          <mesh>
-            <circleGeometry args={[0.12, 32]} />
-            <meshBasicMaterial color="#e4d0fa" transparent opacity={0.8} />
-          </mesh>
-        </group>
-      )}
 
       <Text
         position={[0, -1.65, 0.03]}
@@ -453,7 +631,6 @@ function GalleryScene({ onSelect, transitionProgress, exhibitionActive }) {
       <ambientLight intensity={1.1} />
       <hemisphereLight args={["#d8d9e3", "#21160f", 0.7]} />
       
-      {/* Focused spotlight */}
       <spotLight
         position={[0, 4.4, 0.2]}
         angle={0.3}
@@ -467,13 +644,11 @@ function GalleryScene({ onSelect, transitionProgress, exhibitionActive }) {
         shadow-bias={-0.0001}
       />
 
-      {/* Gallery floor */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[18, 18]} />
         <meshStandardMaterial color="#292725" roughness={0.3} metalness={0.22} />
       </mesh>
 
-      {/* Subtle contact shadow beneath the sculpture */}
       <ContactShadows
         position={[0, 0.02, -1.5]}
         opacity={0.25}
@@ -484,14 +659,11 @@ function GalleryScene({ onSelect, transitionProgress, exhibitionActive }) {
         color="#000000"
       />
 
-
-      {/* Back wall */}
       <mesh position={[0, 2.5, -9]}>
         <boxGeometry args={[18, 5, 0.3]} />
         <meshStandardMaterial color="#191817" />
       </mesh>
 
-      {/* Side walls */}
       {[-9, 9].map((x) => (
         <mesh key={x} position={[x, 2.5, 0]}>
           <boxGeometry args={[0.3, 5, 18]} />
@@ -499,13 +671,11 @@ function GalleryScene({ onSelect, transitionProgress, exhibitionActive }) {
         </mesh>
       ))}
 
-      {/* Ceiling */}
       <mesh position={[0, 5, 0]}>
         <boxGeometry args={[18, 0.3, 18]} />
         <meshStandardMaterial color="#0c0c0c" />
       </mesh>
 
-      {/* Warm architectural lights (toned down) */}
       {[-6, -2, 2, 6].map((x) => (
         <pointLight
           key={x}
@@ -516,12 +686,10 @@ function GalleryScene({ onSelect, transitionProgress, exhibitionActive }) {
         />
       ))}
 
-      {/* Wraparound project exhibits */}
       {exhibits.map((item) => (
         <Artwork key={item.title} {...item} onSelect={onSelect} />
       ))}
 
-      {/* Central Interactive Sculpture */}
       <Sculpture3D className="sculpture-canvas" />
 
       <CameraTransition progress={transitionProgress} />
